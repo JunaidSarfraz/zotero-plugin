@@ -2202,15 +2202,14 @@ Zotero.Item.prototype.save = function(options) {
 		throw(e);
 	}
 	
+	var newObj;
 	if(this._itemDataLoaded == true){
-		alert("URL = "+this._itemData[1]); //My line
-		alert("TITLE = "+this._itemData[110]); //My line
-		alert("Abstract = "+this._itemData[90]); //My line
+		newObj = this;
 	}
 	
 	if(this._creatorsLoaded == true){
 		for (var pos in this._creators) {
-				alert("Creator number "+pos+this._creators[pos]);
+			newObj[pos] = this._creators[pos];
 		}
 	}
 	
@@ -2220,7 +2219,10 @@ Zotero.Item.prototype.save = function(options) {
 	if (isNew) {
 		var id = this.id;
 		this._disabled = true;
-		return id;
+		var data = [];
+		data[0] = id;
+		data[1] = newObj;
+		return data;
 	}
 	
 	return true;

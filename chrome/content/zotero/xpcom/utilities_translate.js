@@ -328,7 +328,8 @@ Zotero.Utilities.Translate.prototype.doGet = function(urls, processor, done, res
 					done();
 				}
 			}
-			translate.decrementAsyncProcesses("Zotero.Utilities.Translate#doGet");
+			var data = translate.decrementAsyncProcesses("Zotero.Utilities.Translate#doGet");
+			return data;
 		} catch(e) {
 			translate.complete(false, e);
 		}

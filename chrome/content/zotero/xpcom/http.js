@@ -244,7 +244,8 @@ Zotero.HTTP = new function() {
 		xmlhttp.onreadystatechange = function() {
 			// XXX Remove when we drop support for Fx <24
 			if(useMethodjit !== undefined) Components.utils.methodjit = useMethodjit;
-			_stateChange(xmlhttp, onDone, responseCharset);
+			var my_data = _stateChange(xmlhttp, onDone, responseCharset);
+			return my_data;
 		};
 		
 		if(cookieSandbox) cookieSandbox.attachToInterfaceRequestor(xmlhttp.getInterface(Components.interfaces.nsIInterfaceRequestor));
@@ -909,6 +910,7 @@ Zotero.HTTP = new function() {
 	 * @private
 	 */
 	function _stateChange(xmlhttp, callback, responseCharset, data) {
+		var return_data;
 		switch (xmlhttp.readyState){
 			// Request not yet made
 			case 1:
@@ -928,10 +930,11 @@ Zotero.HTTP = new function() {
 					if (responseCharset) {
 						xmlhttp.channel.contentCharset = responseCharset;
 					}
-					callback(xmlhttp, data);
+					return_data = callback(xmlhttp, data);
 				}
 			break;
 		}
+		return return_data;
 	}
 
 	/**

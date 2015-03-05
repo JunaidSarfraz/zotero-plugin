@@ -951,15 +951,19 @@ Zotero.Translate.Base.prototype = {
 	 * Indicates that a new async process is finished
 	 */
 	"decrementAsyncProcesses":function(f, by) {
+		var data;
 		this._runningAsyncProcesses -= (by ? by : 1);
 		if(!this._parentTranslator) {
 			//Zotero.debug("Translate: Decremented asynchronous processes to "+this._runningAsyncProcesses+" for "+f, 4);
 			//Zotero.debug((new Error()).stack);
 		}
 		if(this._runningAsyncProcesses === 0) {
-			this.complete();
+			data = this.complete();
 		}
-		if(this._parentTranslator) this._parentTranslator.decrementAsyncProcesses(f+" from child translator", by);
+		if(this._parentTranslator){ 
+			this._parentTranslator.decrementAsyncProcesses(f+" from child translator", by);
+		}
+		return data;
 	},
 
 	/**
@@ -1151,17 +1155,19 @@ Zotero.Translate.Base.prototype = {
 		this._waitingForSave = false;
 		
 		var me = this;
+		var data;
 		if(typeof this.translator[0] === "object") {
 			// already have a translator object, so use it
-			this._loadTranslator(this.translator[0], function() { me._translateTranslatorLoaded() });
+			this._loadTranslator(this.translator[0], function() {  data = me._translateTranslatorLoaded() });
 		} else {
 			// need to get translator first
 			Zotero.Translators.get(this.translator[0],
 					function(translator) {
 						me.translator[0] = translator;
-						me._loadTranslator(translator, function() { me._translateTranslatorLoaded() });
+						data = me._loadTranslator(translator, function() { me._translateTranslatorLoaded() });
 					});
 		}
+		return data;
 	},
 	
 	/**
@@ -1192,7 +1198,8 @@ Zotero.Translate.Base.prototype = {
 			return false;
 		}
 		
-		this.decrementAsyncProcesses("Zotero.Translate#translate()");
+		var data = this.decrementAsyncProcesses("Zotero.Translate#translate()");
+		return data;
 	},
 	
 	/**
@@ -1261,8 +1268,13 @@ Zotero.Translate.Base.prototype = {
 	 */
 	"complete":function(returnValue, error) {
 		// allow translation to be aborted for re-running after selecting items
-		if(this._aborted) return;
-		
+		if(this._aborted){
+			var returnData = [];
+			returnData[0] = null;
+			returnData[1] = null;
+			return returnData;
+		}
+			
 		// Make sure this isn't called twice
 		if(this._currentState === null) {
 			if(!returnValue) {
@@ -1273,7 +1285,10 @@ Zotero.Translate.Base.prototype = {
 				Zotero.debug("Translate: WARNING: Zotero.done() called after translation completion. This should never happen. Please examine the stack below.");
 				Zotero.debug(e.stack);
 			}
-			return;
+			var returnData = [];
+			returnData[0] = null;
+			returnData[1] = null;
+			return returnData;
 		}
 		
 		// reset async processes and propagate them to parent
@@ -1326,9 +1341,12 @@ Zotero.Translate.Base.prototype = {
 			if(returnValue) {
 				if(this.saveQueue.length) {
 					this._waitingForSave = true;
-					this._saveItems(this.saveQueue);
+					var data = this._saveItems(this.saveQueue);
 					this.saveQueue = [];
-					return;
+					var returnData = [];
+					returnData[0] = null;
+					returnData[1] = data[1];
+					return returnData;
 				}
 				this._debug("Translation successful");
 			} else {
@@ -1353,8 +1371,11 @@ Zotero.Translate.Base.prototype = {
 				this._runHandler("done", returnValue);
 			}
 		}
-		
-		return errorString;
+		var returnData = [];
+		returnData[0] = errorString;
+		returnData[1] = null;
+		return returnData;
+		//return errorString;
 	},
 	
 	/**
@@ -1368,7 +1389,7 @@ Zotero.Translate.Base.prototype = {
 			attachmentsWithProgress = [];
 		
 		this._savingItems++;
-		this._itemSaver.saveItems(items.slice(), function(returnValue, newItems) {	
+		var data = this._itemSaver.saveItems(items.slice(), function(returnValue, newItems) {
 			if(returnValue) {
 				// Remove attachments not being saved from item.attachments
 				for(var i=0; i<items.length; i++) {
@@ -1424,6 +1445,7 @@ Zotero.Translate.Base.prototype = {
 				attachmentsWithProgress.push(attachment);
 			}
 		});
+		return data;
 	},
 	
 	/**
@@ -1758,7 +1780,8 @@ Zotero.Translate.Web.prototype._prepareTranslation = function() {
  */
 Zotero.Translate.Web.prototype.translate = function(libraryID, saveAttachments, selectedItems) {
 	this._selectedItems = selectedItems;
-	Zotero.Translate.Base.prototype.translate.apply(this, [libraryID, saveAttachments]);
+	var data = Zotero.Translate.Base.prototype.translate.apply(this, [libraryID, saveAttachments]);
+	return data;
 }
 
 /**
@@ -1766,8 +1789,9 @@ Zotero.Translate.Web.prototype.translate = function(libraryID, saveAttachments, 
  */
 Zotero.Translate.Web.prototype._translateTranslatorLoaded = function() {
 	var runMode = this.translator[0].runMode;
+	var data;
 	if(runMode === Zotero.Translator.RUN_MODE_IN_BROWSER || this._parentTranslator) {
-		Zotero.Translate.Base.prototype._translateTranslatorLoaded.apply(this);
+		data = Zotero.Translate.Base.prototype._translateTranslatorLoaded.apply(this);
 	} else if(runMode === Zotero.Translator.RUN_MODE_ZOTERO_STANDALONE ||
 			(runMode === Zotero.Translator.RUN_MODE_ZOTERO_SERVER && Zotero.Connector.isOnline)) {
 		var me = this;
@@ -1785,6 +1809,7 @@ Zotero.Translate.Web.prototype._translateTranslatorLoaded = function() {
 				me._translateServerComplete(statusCode, response);
 			});
 	}
+	return data;
 }
 	
 /**
@@ -1889,7 +1914,9 @@ Zotero.Translate.Web.prototype._translateServerComplete = function(statusCode, r
 Zotero.Translate.Web.prototype.complete = function(returnValue, error) {
 	// call super
 	var oldState = this._currentState;
-	var errorString = Zotero.Translate.Base.prototype.complete.apply(this, [returnValue, error]);
+	//var errorString = Zotero.Translate.Base.prototype.complete.apply(this, [returnValue, error]);
+	var data = Zotero.Translate.Base.prototype.complete.apply(this, [returnValue, error]);
+	errorString = data[0];
 	
 	// Report translation failure if we failed
 	if(oldState == "translate" && errorString && !this._parentTranslator && this.translator.length
@@ -1912,6 +1939,7 @@ Zotero.Translate.Web.prototype.complete = function(returnValue, error) {
 			Zotero.HTTP.doPost(ZOTERO_CONFIG.REPOSITORY_URL + "report", postBody);
 		});
 	}
+	return data;
 }
 
 /**
@@ -1945,7 +1973,8 @@ Zotero.Translate.Import.prototype.complete = function(returnValue, error) {
 	}
 	
 	// call super
-	Zotero.Translate.Base.prototype.complete.apply(this, [returnValue, error]);
+	var data = Zotero.Translate.Base.prototype.complete.apply(this, [returnValue, error]);
+	return data;
 }
 
 /**

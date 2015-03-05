@@ -137,7 +137,8 @@ Zotero.Translate.ItemSaver.prototype = {
 						}
 						
 						// save item
-						var myID = newItem.save();
+						var data = newItem.save(); // data contains both id and item object
+						var myID = data[0];
 						newItem = Zotero.Items.get(myID);
 						
 						// handle notes
@@ -173,6 +174,10 @@ Zotero.Translate.ItemSaver.prototype = {
 			if(openedTransaction) Zotero.DB.rollbackTransaction();
 			callback(false, e);
 		}
+		var data = [];
+		data[0] = null;
+		data[1] = newItem;
+		return data;
 	},
 	
 	"saveCollection":function(collection) {

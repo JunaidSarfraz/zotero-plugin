@@ -160,7 +160,8 @@ var Zotero_Browser = new function() {
 		var tab = _getTabObject(Zotero_Browser.tabbrowser.selectedBrowser);
 		if(tab.page.translators && tab.page.translators.length) {
 			tab.page.translate.setTranslator(translator || tab.page.translators[0]);
-			Zotero_Browser.performTranslation(tab.page.translate);
+			var data = Zotero_Browser.performTranslation(tab.page.translate);
+			return data;
 		}
 	}
 	
@@ -436,6 +437,7 @@ var Zotero_Browser = new function() {
 			document.getElementById('zotero-annotate-tb').hidden = false;
 			toggleMode();
 		} else {
+
 			document.getElementById('zotero-annotate-tb').hidden = true;
 		}
 	}
@@ -615,7 +617,8 @@ var Zotero_Browser = new function() {
 			}
 		});
 		
-		translate.translate(libraryID);
+		var my_ret_data = translate.translate(libraryID);
+		return my_ret_data;
 	}
 	
 	
