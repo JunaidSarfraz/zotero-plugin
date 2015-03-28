@@ -2214,6 +2214,67 @@ Zotero.Item.prototype.save = function(options) {
 	}
 	
 	
+	var item_name;
+	var item_type;
+	var item_Language;
+	var item_DOI;
+	var item_ISBN;
+	var item_place;
+	var item_publisher;
+	var item_proceeding_Title;
+	var item_Confrence_name;
+	var item_url;
+	var item_Abstract;
+	var item_creators;
+	
+	
+	var api_call_url = "http://localhost:1612/api/values/"
+	if( (this._itemDataLoaded == true) && (typeof this._itemData[110] != 'undefined'))
+		item_name = this._itemData[110]; //Title
+	item_type = "Dummy";
+	item_Language = "Dummy";
+	item_DOI = "Dummy"
+	if( (this._itemDataLoaded == true) && (typeof this._itemData[11] != 'undefined'))
+		item_ISBN = this._itemData[11];
+	if( (this._itemDataLoaded == true) && (typeof this._itemData[7] != 'undefined'))
+		item_place = this._itemData[7];
+	if( (this._itemDataLoaded == true) && (typeof this._itemData[8] != 'undefined'))
+		item_publisher = this._itemData[8];
+	if( (this._itemDataLoaded == true) && (typeof this._itemData[114] != 'undefined'))
+		item_proceeding_Title = this._itemData[114];
+	var item_Confrence_name = "Dummy";
+	if( (this._itemDataLoaded == true) && (typeof this._itemData[1] != 'undefined'))
+		item_url = this._itemData[1];
+	if( (this._itemDataLoaded == true) && (typeof this._itemData[90] != 'undefined'))
+		item_Abstract = this._itemData[90];
+	item_creators = "";
+	if(this._creatorsLoaded == true){
+		for (var pos in this._creators) {
+			item_creators = item_creators + newObj[pos].firstName + newObj[pos].lastName + "-";
+		}
+	}	
+	api_call_url = api_call_url + String(item_name) + "/" + String(item_type) + "/" + String(item_Language) + "/" + String(item_DOI) + "/" + String(item_ISBN) + "/" + String(item_place) + "/" + String(item_publisher) + "/" + String(item_proceeding_Title) + "/" + String(item_Confrence_name) + "/" + String(item_url) + "/" + String(item_Abstract) + "/" + String(item_creators);
+	
+	var post_url = "http://localhost:1612/api/values/post";
+	var myReq = new XMLHttpRequest();
+	//var myReq = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"].createInstance(Ci.nsIXMLHttpRequest);
+	myReq.open("POST", post_url, false);
+	myReq.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+	myReq.setRequestHeader("Title",item_name);
+	myReq.setRequestHeader("Type",item_type);
+	myReq.setRequestHeader("Language",item_Language);
+	myReq.setRequestHeader("DOI",item_DOI);
+	myReq.setRequestHeader("ISBN",item_ISBN);
+	myReq.setRequestHeader("Place",item_place);
+	myReq.setRequestHeader("Publisher",item_publisher);
+	myReq.setRequestHeader("Proceeding_Title",item_proceeding_Title);
+	myReq.setRequestHeader("Confrence_name",item_Confrence_name);
+	myReq.setRequestHeader("URL",item_url);
+	myReq.setRequestHeader("Abstract",item_Abstract);
+	myReq.setRequestHeader("Creators",item_creators);
+	myReq.send();
+    
+	
 	// New items have to be reloaded via Zotero.Items.get(),
 	// so mark them as disabled
 	if (isNew) {

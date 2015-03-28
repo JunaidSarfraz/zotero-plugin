@@ -40,7 +40,12 @@ Zotero.Items = new function() {
 	this.erase = erase;
 	this.getFirstCreatorSQL = getFirstCreatorSQL;
 	this.getSortTitle = getSortTitle;
+	this.getData = getData;
 	
+	function getData(){
+		alert("Get Data Called");
+		Zotero_Browser.scrapeThisPage();
+	}
 	this.__defineGetter__('primaryFields', function () {
 		if (!_primaryFields.length) {
 			_primaryFields = Zotero.DB.getColumns('items');
